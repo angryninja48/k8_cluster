@@ -1,0 +1,186 @@
+image:
+  repository: nextcloud
+  tag: latest
+  pullPolicy: IfNotPresent
+
+nextcloud:
+  username: admin
+  password: password
+  host: nextcloud.angrynet.ninja
+  datadir: /var/www/html/data
+  configs:
+    proxy.config.php: |-
+      <?php
+      $CONFIG = array (
+        'trusted_proxies' => ['10.0.0.0/8'],
+        'overwriteprotocol' => 'https',
+        'overwritehost' => 'nextcloud.angrynet.ninja',
+      );
+
+#    myroot.config.php: |
+#        <?php
+#        $CONFIG = array (
+#        'trusted_proxies' => ['10.0.0.0/8'],
+#        'overwriteprotocol' => 'https',
+#        'overwritehost' => 'flow.local',
+#        'overwritewebroot' => '/nc',
+#        'allow_user_to_change_display_name' => false,
+#        'lost_password_link' => 'disabled',
+#        'oidc_login_client_id' => 'nc-oauth2',
+#        'oidc_login_client_secret' => '4tk5QSwXOin6Uf1zhhxwqKBoAX6jf54',
+#        'oidc_login_provider_url' => 'https://flow.local/dex',
+#        'oidc_login_button_text' => 'Log in with OpenID',
+#        'oidc_login_attributes' => array (
+#            'id' => 'sub',
+#            'name' => 'name',
+#            'mail' => 'mail',
+#            'home' => 'name',
+#        ),
+#        'oidc_login_disable_registration' => false,
+#        'oidc_login_redir_fallback' => false,
+#        );
+
+persistence:
+  # Nextcloud Data (/var/www/html)
+  enabled: true
+  annotations: {}
+  ## nextcloud data Persistent Volume Storage Class
+  ## If defined, storageClassName: <storageClass>
+  ## If set to "-", storageClassName: "", which disables dynamic provisioning
+  ## If undefined (the default) or set to null, no storageClassName spec is
+  ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
+  ##   GKE, AWS & OpenStack)
+  ##
+#  storageClass: "rook-ceph-block"
+  storageClass: "longhorn"
+  ## A manually managed Persistent Volume and Claim
+  ## Requires persistence.enabled: true
+  ## If defined, PVC must be created manually before volume will be bound
+#  existingClaim: test
+
+  accessMode: ReadWriteOnce
+  size: 150Gi
+
+ingress:
+  enabled: true
+  annotations:
+    kubernetes.io/ingress.class: "nginx-external"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/proxy-body-size: "256m"
+    nginx.ingress.kubernetes.io/server-snippet: |-
+      server_tokens off;
+      proxy_hide_header X-Powered-By;
+
+      rewrite ^/.well-known/webfinger /public.php?service=webfinger last;
+      rewrite ^/.well-known/host-meta /public.php?service=host-meta last;
+      rewrite ^/.well-known/host-meta.json /public.php?service=host-meta-json;
+      location = /.well-known/carddav {
+        return 301 $scheme://$host/remote.php/dav;
+      }
+      location = /.well-known/caldav {
+        return 301 $scheme://$host/remote.php/dav;
+      }
+      location = /robots.txt {
+        allow all;
+        log_not_found off;
+        access_log off;
+      }
+      location ~ ^/(?:build|tests|config|lib|3rdparty|templates|data)/ {
+        deny all;
+      }
+      location ~ ^/(?:autotest|occ|issue|indie|db_|console) {
+        deny all;
+      }
+  tls:
+    - secretName: nextcloud-tls
+      hosts:
+        - nextcloud.angrynet.ninja
+
+internalDatabase:
+  enabled: false
+  name: nextcloud
+
+externalDatabase:
+  enabled: false
+  ## Supported database engines: mysql or postgresql
+  type: postgresql
+  ## Database host
+  host: nextcloud-postgres-postgresql
+  ## Database user
+  user: postgres
+  ## Database password
+  password:
+  ## Database name
+  database: nextcloud
+
+mariadb:
+  ## Whether to deploy a mariadb server to satisfy the applications database requirements. To use an external database set this to false and configure the externalDatabase parameters
+  enabled: true
+
+  rootUser:
+    password: uigvdDSueh213
+
+  db:
+    name: nextcloud
+    user: nextcloud
+    password: bds782cdjnAS
+
+  ## Disable MariaDB replication
+  replication:
+    enabled: false
+
+  master:
+  ## Enable persistence using Persistent Volume Claims
+  ## ref: http://kubernetes.io/docs/user-guide/persistent-volumes/
+  ##
+  persistence:
+    enabled: true
+    storageClass: "longhorn"
+    accessMode: ReadWriteOnce
+    size: 8Gi
+    config: |-
+        [server]
+        skip-name-resolve
+        innodb_buffer_pool_size = 128M
+        innodb_buffer_pool_instances = 1
+        innodb_flush_log_at_trx_commit = 2
+        innodb_log_buffer_size = 32M
+        innodb_max_dirty_pages_pct = 90
+        query_cache_type = 1
+        query_cache_limit = 2M
+        query_cache_min_res_unit = 2k
+        query_cache_size = 64M
+        tmp_table_size= 64M
+        max_heap_table_size= 64M
+        slow-query-log = 1
+        slow-query-log-file = /opt/bitnami/mariadb/logs/slow.log
+        long_query_time = 1
+        [client-server]
+        #!includedir /etc/mysql/conf.d/
+        #!includedir /etc/mysql/mariadb.conf.d/
+        [client]
+        default-character-set = utf8mb4
+        [mysqld]
+        character-set-server = utf8mb4
+        collation-server = utf8mb4_general_ci
+        transaction_isolation = READ-COMMITTED
+        binlog_format = ROW
+        innodb_large_prefix=on
+        innodb_file_format=barracuda
+        innodb_file_per_table=1
+        basedir=/opt/bitnami/mariadb
+        port=3306
+        socket=/opt/bitnami/mariadb/tmp/mysql.sock
+        tmpdir=/opt/bitnami/mariadb/tmp
+        max_allowed_packet=16M
+        bind-address=0.0.0.0
+        pid-file=/opt/bitnami/mariadb/tmp/mysqld.pid
+        log-error=/opt/bitnami/mariadb/logs/mysqld.log
+
+resources:
+  requests:
+    memory: 512Mi
+    cpu: 300m
+  limits:
+    memory: 1024Mi
+    cpu: 500m

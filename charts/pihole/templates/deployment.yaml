@@ -1,0 +1,112 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "pihole.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ template "pihole.fullname" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+spec:
+  replicas: {{ .Values.replicaCount }}
+  strategy:
+    type: {{ .Values.strategyType }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ template "pihole.fullname" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ template "pihole.fullname" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+#      hostNetwork: "{{ default "" .Values.config.hostnetwork }}"
+      containers:
+      - name: {{ template "pihole.fullname" . }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ default "" .Values.image.pullPolicy | quote }}
+
+        env:
+        - name: DNS1
+          value: "127.0.0.1#5054"
+        - name: DNS2
+          value: "127.0.0.1#5054"
+        - name: IPv6
+          value: "false"
+        - name: WEBPASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ template "pihole.fullname" . }}
+              key: web-password
+        - name: TZ
+          value: "{{ .Values.config.timezone }}"
+
+        livenessProbe:
+          httpGet:
+            path: /admin
+            port: 80
+          initialDelaySeconds: {{ .Values.probes.liveness.initialDelaySeconds }}
+          failureThreshold: {{ .Values.probes.liveness.failureThreshold }}
+          timeoutSeconds: {{ .Values.probes.liveness.timeoutSeconds }}
+        readinessProbe:
+          httpGet:
+            path: /admin
+            port: 80
+          initialDelaySeconds: {{ .Values.probes.readiness.initialDelaySeconds }}
+          failureThreshold: {{ .Values.probes.readiness.failureThreshold }}
+          timeoutSeconds: {{ .Values.probes.readiness.timeoutSeconds }}
+
+        resources:
+{{ toYaml .Values.resources | indent 10 }}
+
+        volumeMounts:
+        - name: pihole-data
+          mountPath: /etc/pihole
+
+      - name: cloudflared
+        image: visibilityspots/cloudflared:amd64
+        imagePullPolicy: {{ default "" .Values.image.pullPolicy | quote }}
+        env:
+        - name: TUNNEL_METRICS
+          value: 127.0.0.1:3000
+
+        livenessProbe:
+          tcpSocket:
+            port: 5054
+          initialDelaySeconds: {{ .Values.probes.liveness.initialDelaySeconds }}
+          failureThreshold: {{ .Values.probes.liveness.failureThreshold }}
+          timeoutSeconds: {{ .Values.probes.liveness.timeoutSeconds }}
+        readinessProbe:
+          tcpSocket:
+            port: 5054
+          initialDelaySeconds: {{ .Values.probes.readiness.initialDelaySeconds }}
+          failureThreshold: {{ .Values.probes.readiness.failureThreshold }}
+          timeoutSeconds: {{ .Values.probes.readiness.timeoutSeconds }}
+
+        resources:
+{{ toYaml .Values.resources | indent 10 }}
+
+
+      volumes:
+      - name: pihole-data
+      {{- if .Values.persistence.enabled }}
+        persistentVolumeClaim:
+          claimName: {{ if .Values.persistence.existingClaim }}{{ .Values.persistence.existingClaim }}{{- else }}{{ template "pihole.fullname" . }}-data{{- end }}
+      {{- else }}
+        emptyDir: {}
+      {{- end }}
+
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}

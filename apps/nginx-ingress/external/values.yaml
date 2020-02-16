@@ -1,0 +1,5 @@
+controller:
+  service:
+    type: LoadBalancer
+    loadBalancerIP: 10.20.0.50
+  ingressClass: nginx-external

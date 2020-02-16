@@ -1,0 +1,129 @@
+## GitLab CE image
+## ref: https://hub.docker.com/r/gitlab/gitlab-ce/tags/
+##
+image:
+  repository: gitlab/gitlab-ce
+  tag: 12.5.6-ce.0
+  pullPolicy: IfNotPresent
+
+replicaCount: 1
+
+gitlab:
+## The URL (with protocol) that your users will use to reach the install.
+## ref: https://docs.gitlab.com/omnibus/settings/configuration.html#configuring-the-external-url-for-gitlab
+##
+## prefix with https if using TLS
+  ExternalUrl: http://git.local
+## Change the initial default admin password if set. If not set, you'll be
+## able to set it when you first visit your install.
+##
+#  RootPassword:
+
+
+## Change the initial default admin password if set. If not set, you'll be
+## able to set it when you first visit your install.
+##
+# gitlabRootPassword: password
+
+## Ingress configuration options
+##
+ingress:
+  enabled: false
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+  tls:
+    #- secretName: git-local-tls
+    #  hosts:
+    #    - git.local
+  url: git.local
+
+## External service ports
+service:
+  type: ClusterIP
+  http:
+    enabled: true
+    port: 80
+    #nodePort: 30280
+# Configure NGINX to to allow expose TCP service
+# https://kubernetes.github.io/ingress-nginx/user-guide/exposing-tcp-udp-services/
+  ssh:
+    enabled: false
+    port: 22
+    #nodePort: 30222
+
+## Configure resource requests and limits
+## ref: http://kubernetes.io/docs/user-guide/compute-resources/
+##
+resources:
+  ## GitLab requires a good deal of resources. We have split out Postgres and
+  ## redis, which helps some. Refer to the guidelines for larger installs.
+  ## ref: https://docs.gitlab.com/ce/install/requirements.html#hardware-requirements
+  requests:
+    memory: 1Gi
+    cpu: 500m
+  limits:
+    memory: 2Gi
+    cpu: 1
+
+## Enable persistence using Persistent Volume Claims
+## ref: http://kubernetes.io/docs/user-guide/persistent-volumes/
+## ref: https://docs.gitlab.com/ce/install/requirements.html#storage
+##
+persistence:
+  enabled: false
+  size: 10Gi
+
+
+  ## If defined, storageClassName: <storageClass>
+  ## If set to "-", storageClassName: "", which disables dynamic provisioning
+  ## If undefined (the default) or set to null, no storageClassName spec is
+  ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
+  ##   GKE, AWS & OpenStack)
+  ##
+  # storageClass: "-"
+
+  ## Manually managed PVC
+  # existingClaim:
+
+  accessMode: ReadWriteOnce
+
+nodeSelector: {}
+
+affinity: {}
+
+tolerations: {}
+
+## Configuration values for the postgresql dependency.
+## ref: https://github.com/kubernetes/charts/blob/master/stable/postgresql/README.md
+##
+postgresql:
+  enabled: false
+  # 10 is the newest supported version for the GitLab container
+  imageTag: "10-alpine"
+
+  #https://gitlab.com/gitlab-org/charts/gitlab/issues/1555
+  postgresqlUsername: postgres
+  postgresqlPassword: gitlab
+  postgresqlDatabase: gitlab
+
+  persistence:
+    enabled: false
+    size: 10Gi
+
+## Configuration values for the redis dependency.
+## ref: https://github.com/kubernetes/charts/blob/master/stable/redis/README.md
+##
+redis:
+  enabled: false
+  password: gitlab
+
+  resources:
+    requests:
+      memory: 1Gi
+
+  master:
+    persistence:
+      enabled: false
+
+  cluster:
+    enabled: false

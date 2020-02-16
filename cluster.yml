@@ -1,0 +1,161 @@
+# If you intened to deploy Kubernetes in an air-gapped environment,
+# please consult the documentation on how to configure custom RKE images.
+nodes:
+- address: 10.20.0.10
+  port: "22"
+  internal_address: ""
+  role:
+  - controlplane
+  - worker
+  - etcd
+  hostname_override: master01
+  user: rancher
+  docker_socket: /var/run/docker.sock
+  ssh_key: ""
+  ssh_key_path: ~/.ssh/id_rsa
+  ssh_cert: ""
+  ssh_cert_path: ""
+  labels:
+    size: small
+- address: 10.20.0.11
+  port: "22"
+  internal_address: ""
+  role:
+  - worker
+  hostname_override: node01
+  user: rancher
+  docker_socket: /var/run/docker.sock
+  ssh_key: ""
+  ssh_key_path: ~/.ssh/id_rsa
+  ssh_cert: ""
+  ssh_cert_path: ""
+  labels:
+    size: medium
+- address: 10.20.0.12
+  port: "22"
+  internal_address: ""
+  role:
+  - worker
+  hostname_override: node02
+  user: rancher
+  docker_socket: /var/run/docker.sock
+  ssh_key: ""
+  ssh_key_path: ~/.ssh/id_rsa
+  ssh_cert: ""
+  ssh_cert_path: ""
+  labels:
+    size: large
+- address: 10.20.0.13
+  port: "22"
+  internal_address: ""
+  role:
+  - worker
+  hostname_override: node03
+  user: rancher
+  docker_socket: /var/run/docker.sock
+  ssh_key: ""
+  ssh_key_path: ~/.ssh/id_rsa
+  ssh_cert: ""
+  ssh_cert_path: ""
+  labels:
+    size: large
+services:
+  etcd:
+    image: ""
+    extra_args: {}
+    extra_binds: []
+    extra_env: []
+    external_urls: []
+    ca_cert: ""
+    cert: ""
+    key: ""
+    path: ""
+    snapshot: null
+    retention: ""
+    creation: ""
+    backup_config: null
+  kube-api:
+    image: ""
+    extra_args: {}
+    extra_binds: []
+    extra_env: []
+    service_cluster_ip_range: 10.43.0.0/16
+    service_node_port_range: ""
+    pod_security_policy: false
+    always_pull_images: false
+  kube-controller:
+    image: ""
+    extra_args: {}
+    extra_binds: []
+    extra_env: []
+    cluster_cidr: 10.42.0.0/16
+    service_cluster_ip_range: 10.43.0.0/16
+  scheduler:
+    image: ""
+    extra_args: {}
+    extra_binds: []
+    extra_env: []
+  kubelet:
+    image: ""
+    extra_args:
+      image-pull-progress-deadline: 10m
+      #https://rook.io/docs/rook/master/flexvolume.html
+#      volume-plugin-dir: /usr/libexec/kubernetes/kubelet-plugins/volume/exec
+    extra_binds:
+      #https://rook.io/docs/rook/master/flexvolume.html
+#      - /usr/libexec/kubernetes/kubelet-plugins/volume/exec:/usr/libexec/kubernetes/kubelet-plugins/volume/exec
+# Longhorn
+     - "/opt/rke/var/lib/kubelet/plugins:/var/lib/kubelet/plugins"
+    extra_env: []
+    cluster_domain: angrynet.ninja
+    infra_container_image: ""
+    cluster_dns_server: 10.43.0.10
+    fail_swap_on: false
+  kubeproxy:
+    image: ""
+    extra_args: {}
+    extra_binds: []
+    extra_env: []
+network:
+  plugin: canal
+  options: {}
+authentication:
+  strategy: x509
+  sans: []
+  webhook: null
+addons: ""
+addons_include: []
+ssh_key_path: ~/.ssh/id_rsa
+ssh_cert_path: ""
+ssh_agent_auth: false
+authorization:
+  mode: rbac
+  options: {}
+ignore_docker_version: false
+kubernetes_version: "v1.16.6-rancher1-2"
+private_registries: []
+ingress:
+  provider: none
+  options: {}
+  node_selector: {}
+  extra_args: {}
+cluster_name: ""
+cloud_provider:
+  name: ""
+prefix_path: ""
+addon_job_timeout: 0
+bastion_host:
+  address: ""
+  port: ""
+  user: ""
+  ssh_key: ""
+  ssh_key_path: ""
+  ssh_cert: ""
+  ssh_cert_path: ""
+monitoring:
+  provider: ""
+  options: {}
+restore:
+  restore: false
+  snapshot_name: ""
+dns: null

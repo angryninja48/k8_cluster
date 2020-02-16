@@ -1,0 +1,41 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "pihole.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ template "pihole.fullname" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+spec:
+{{- if  .Values.service.http.enabled }}
+{{- if (or (eq .Values.service.http.type "ClusterIP") (empty .Values.service.http.type)) }}
+  type: ClusterIP
+  {{- if .Values.service.http.clusterIP }}
+  clusterIP: {{ .Values.service.http.clusterIP }}
+  {{end}}
+{{- else if eq .Values.service.http.type "LoadBalancer" }}
+  type: {{ .Values.service.http.type }}
+  {{- if .Values.service.http.loadBalancerIP }}
+  loadBalancerIP: {{ .Values.service.http.loadBalancerIP }}
+  {{- end }}
+{{- else }}
+  type: {{ .Values.service.http.type }}
+{{- end }}
+  ports:
+  - name: http
+    port: {{ .Values.service.http.port | int }}
+    targetPort: 80
+    protocol: TCP
+{{- end }}
+#  - name: dns-tcp
+#    port: {{ .Values.service.dns.port | int }}
+#    {{- if  .Values.service.dns.nodePort }}
+#    nodePort: {{ .Values.service.ssh.nodePort }}
+#    {{- end }}
+#    targetPort: 53
+#    protocol: TCP
+
+  selector:
+    app.kubernetes.io/name: {{ template "pihole.fullname" . }}

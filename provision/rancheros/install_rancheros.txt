@@ -1,0 +1,37 @@
+# Install Rancheros
+
+Username = rancher
+PW = rancher
+
+#https://github.com/rancher/os/issues/2241
+sudo mkdir /dev/sr0
+
+cat <<EOF > /tmp/cloud-config.yml
+#cloud-config
+
+hostname: node01
+
+rancher:
+  network:
+    interfaces:
+      eth*:
+       dhcp: true
+
+    dns:
+     nameservers:
+      - 10.20.0.1
+
+ssh_authorized_keys:
+  - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDnhPOcVKBntKSFJ3LoeTeyG7HKriXQrs7N2b0nhe4jL1DU/zQ6nmTyRHxtb1+rX91lcky2AfvgHF4aVVesTfbcxkCGxxIsdOcRSEBtmpiSO+Wzmyp+sHd8cp3Nvxp1FYfrTLFzzYF9cbIh4r1SicxnZdRog54vVRyjmCoWqLyzNES4S5P2z6a3HKf/rAjTx3VYOpvWUY31rBzViOIgZqP9gg0VWNaqpD+5w6rYfgUkbTgjvxpeEAE4l1ava+z4WK1MyrCxPS7fgzP2Ehk5d/ZS8fW4vgVgDWzmx6hBEUjzhN07umu1dyukHMCeXUVX9nxz3wBvHl4fkNl7HxC/FaD5 jbaker@Angry-Ninja.angrynet.local
+
+EOF
+
+#Install to usb
+sudo ros install -c /tmp/cloud-config.yml -d /dev/sdb -f
+
+
+
+# Configure additional disks
+#https://rancher.com/docs/os/v1.2/en/storage/additional-mounts/
+ros config set mounts '[["/dev/sda","/mnt/sda","ext4",""]]'
+mkfs.ext4 /dev/sda

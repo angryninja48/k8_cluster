@@ -1,0 +1,136 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "gitlab-ce.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ template "gitlab-ce.fullname" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+data:
+  ## This is used by GitLab Omnibus as the primary means of configuration.
+  ## ref: https://gitlab.com/gitlab-org/omnibus-gitlab/blob/master/files/gitlab-config-template/gitlab.rb.template
+  ##
+  gitlab_omnibus_config: |
+    external_url ENV['EXTERNAL_URL'];
+    letsencrypt['enable'] = false;
+    nginx['listen_port'] = 80;
+    nginx['listen_https'] = false;
+
+    root_pass = ENV['GITLAB_ROOT_PASSWORD'];
+    gitlab_rails['initial_root_password'] = root_pass unless root_pass.to_s == '';
+
+    postgresql['enable'] = true;
+    gitlab_rails['db_host'] = ENV['DB_HOST'];
+    gitlab_rails['db_password'] = ENV['DB_PASSWORD'];
+    gitlab_rails['db_username'] = ENV['DB_USER'];
+    gitlab_rails['db_database'] = ENV['DB_DATABASE'];
+
+    redis['enable'] = true;
+    gitlab_rails['redis_host'] = ENV['REDIS_HOST'];
+    gitlab_rails['redis_password'] = ENV['REDIS_PASSWORD'];
+    gitlab_rails['rake_cache_clear'] = false;
+    unicorn['worker_processes'] = 2;
+    manage_accounts['enable'] = true;
+    manage_storage_directories['manage_etc'] = false;
+    gitlab_shell['auth_file'] = '/gitlab-data/ssh/authorized_keys';
+    git_data_dirs({ "default" => { "path" => "/gitlab-data/git-data" } })
+    gitlab_rails['shared_path'] = '/gitlab-data/shared';
+    gitlab_rails['uploads_directory'] = '/gitlab-data/uploads';
+    gitlab_ci['builds_directory'] = '/gitlab-data/builds';
+
+    grafana['enable'] = false;
+    prometheus_monitoring['enable'] = false;
+
+
+#    external_url ENV['EXTERNAL_URL'];
+#    root_pass = ENV['GITLAB_ROOT_PASSWORD'];
+#    gitlab_rails['initial_root_password'] = root_pass unless root_pass.to_s == '';
+#    postgresql['enable'] = false;
+#    gitlab_rails['db_host'] = ENV['DB_HOST'];
+#    gitlab_rails['db_password'] = ENV['DB_PASSWORD'];
+#    gitlab_rails['db_username'] = ENV['DB_USER'];
+#    gitlab_rails['db_database'] = ENV['DB_DATABASE'];
+#    redis['enable'] = false;
+#    gitlab_rails['redis_host'] = ENV['REDIS_HOST'];
+#    gitlab_rails['redis_password'] = ENV['REDIS_PASSWORD'];
+#    unicorn['worker_processes'] = 2;
+#    manage_accounts['enable'] = true;
+#    manage_storage_directories['manage_etc'] = false;
+#    gitlab_shell['auth_file'] = '/gitlab-data/ssh/authorized_keys';
+#    git_data_dirs({ "default" => { "path" => "/gitlab-data/git-data" } });
+#    gitlab_rails['shared_path'] = '/gitlab-data/shared';
+#    gitlab_rails['uploads_directory'] = '/gitlab-data/uploads';
+#    gitlab_ci['builds_directory'] = '/gitlab-data/builds';
+
+
+
+
+
+
+
+
+#    external_url "https://gitlab.tech.dreamhack.se"
+#    registry_external_url "https://registry.tech.dreamhack.se"
+#    root_pass = ENV['GITLAB_ROOT_PASSWORD']
+#    gitlab_rails['initial_root_password'] = root_pass unless root_pass.to_s == ''
+#    nginx['enable'] = false
+#    registry_nginx['enable'] = false
+#    gitlab_workhorse['listen_network'] = 'tcp'
+#    gitlab_workhorse['listen_addr'] = '0.0.0.0:8005'
+#    registry['registry_http_addr'] = '0.0.0.0:8105'
+#    postgresql['enable'] = false
+#    gitlab_rails['db_host'] = ENV['DB_HOST']
+#    gitlab_rails['db_username'] = 'gitlab'
+#    gitlab_rails['db_database'] = ENV['DB_DATABASE']
+#    gitlab_rails['db_port'] = 5432
+#    gitlab_rails['db_password'] = ENV['DB_PASSWORD']
+#    redis['enable'] = false
+#    gitlab_rails['redis_host'] = ENV['REDIS_HOST']
+#    manage_accounts['enable'] = true
+#    manage_storage_directories['manage_etc'] = false
+#    gitlab_shell['auth_file'] = '/gitlab-data/ssh/authorized_keys'
+#    git_data_dirs({ "default" => { "path" => "/gitlab-data/git-data" } })
+#    gitlab_rails['shared_path'] = '/gitlab-data/shared'
+#    gitlab_rails['uploads_directory'] = '/gitlab-data/uploads'
+#    gitlab_ci['builds_directory'] = '/gitlab-data/builds'
+#    gitlab_rails['registry_path'] = '/gitlab-registry'
+#    gitlab_rails['trusted_proxies'] = [ '10.0.0.0/8', '172.16.0.0/16' ]
+#    prometheus_monitoring['enable'] = true
+#    postgres_exporter['enable'] = true
+#    redis_exporter['enable'] = true
+#    gitlab_monitor['enable'] = true
+#    prometheus['monitor_kubernetes'] = false
+#    gitlab_rails['monitoring_whitelist'] = [ '10.0.0.0/8', '172.16.0.0/16' ]
+#    gitlab_rails['ldap_enabled'] = true
+#    gitlab_rails['ldap_servers'] = {
+#    'main' => {
+#      'label' => 'dhtech ldap',
+#      'host'  => 'ldap.ldap',
+#      'port' => 389,
+#      'uid' => 'uid',
+#      'encryption' => 'plain',
+#      'base' => 'dc=dreamhack,dc=se',
+#      'group_base' => 'dc=dreamhack,dc=se',
+#      'admin_group' => 'services-colo',
+#      'active_directory' => false,
+#      'attributes' => {
+#        'username' => 'uid',
+#        'email' => 'mail',
+#        'first_name' => 'givenName',
+#        'last_name' => 'sn',
+#      },
+#      'sync_ssh_keys' => 'sshPublicKey',
+#    }}
+#    # Nicer brighter theme as default
+#    gitlab_rails['gitlab_default_theme'] = 3
+#    # Github integration
+#    gitlab_rails['omniauth_providers'] = [{
+#        'name' => 'github',
+#        'app_id' => ENV['GITHUB_APP_ID'],
+#        'app_secret' => ENV['GITHUB_APP_SECRET'],
+#        'url' => 'https://github.com/',
+#        'args' => { 'scope' => 'user:email' }
+#      }
+#    ]

@@ -1,0 +1,39 @@
+apiVersion: cert-manager.io/v1alpha2
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-staging
+spec:
+  acme:
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+    email: jonbaker85@gmail.com
+    privateKeySecretRef:
+      name: letsencrypt-staging
+    solvers:
+      # Use for all domains
+    - selector: {}
+      dns01:
+        cloudflare:
+          email: jonbaker85@gmail.com
+          apiKeySecretRef:
+            name: cloudflare-api-key
+            key: api-key
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: jonbaker85@gmail.com
+    privateKeySecretRef:
+      name: letsencrypt-prod
+    solvers:
+      # Use for all domains
+    - selector: {}
+      dns01:
+        cloudflare:
+          email: jonbaker85@gmail.com
+          apiKeySecretRef:
+            name: cloudflare-api-key
+            key: api-key

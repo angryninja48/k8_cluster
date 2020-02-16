@@ -1,0 +1,95 @@
+#------------------------------------------
+######### PRE-REQ's
+#------------------------------------------
+1. Setup Public DNS as follows:
+  - *.k8s -> home.angrynet.ninja (CNAME)
+  - k8s -> home.angrynet.ninja (CNAME)
+2. Portforward 80 to 10.20.0.50 (Ingress MetalLB IP)
+3. Add to private DNS (dnsmasq): address=/.k8s.angrynet.ninja/10.20.0.50
+4. RancherOS installed and configured (rancheros/install_rancheros.txt)
+5. RKE installed -
+6. Helm installed
+
+# Install helm2/
+brew install helm@2
+brew link --force helm@2
+
+# If connecting to an existing tiller
+helm init --client-only
+
+##### Stop all Container and delete all K8
+docker stop $(docker ps -a -q) && docker rm $(docker ps -a -q)
+
+sudo rm -rf /opt/* \
+&& sudo rm -rf /var/lib/rook \
+&& sudo rm -rf /var/lib/etcd \
+&& sudo rm -rf /var/lib/cni \
+&& sudo rm -rf /var/lib/containerd \
+&& sudo rm -rf /var/lib/calico
+
+##### Delete all containers
+docker rm $(docker ps -a -q)
+
+#------------------------------------------
+######### Install
+#------------------------------------------
+
+#Build K* cluster
+rke config (outputs cluster.yml)
+
+rke up
+
+#Export kubectl config
+export KUBECONFIG=$(pwd)/kube_config_cluster.yml
+
+# Add repo
+helm repo add stable https://kubernetes-charts.storage.googleapis.com/
+helm repo update
+
+# Install tiller (No longer needed in helm3)
+# kubectl -n kube-system create serviceaccount tiller
+# kubectl create clusterrolebinding tiller --clusterrole cluster-admin --serviceaccount=kube-system:tiller
+# helm init --service-account tiller
+
+# Install metallb
+kubectl create ns metallb
+#kubectl apply -f metallb-configmap.yaml
+helm install metallb --namespace metallb -f helm/metallb/values.yaml stable/metallb
+
+# install ingress controller
+kubectl create ns ingress
+helm install nginx-ingress --namespace ingress -f helm/ingress/values.yaml stable/nginx-ingress
+
+# Install cert-manager - Change DNS as it needs to resolve external names to verify. Port 80 needs to be open as well
+# Cert-manager creds
+kubectl create ns cert-manager
+kubectl apply -f https://raw.githubusercontent.com/jetstack/cert-manager/release-0.10/deploy/manifests/00-crds.yaml
+helm repo add jetstack https://charts.jetstack.io
+helm install cert-manager --namespace cert-manager -f helm/certmanager/values.yaml jetstack/cert-manager
+
+# Install cert issuer
+kubectl apply -f helm/certmanager/letsencrypt-clusterissuer-prod.yaml
+kubectl apply -f helm/certmanager/letsencrypt-clusterissuer-staging.yaml
+
+# Test if needed:
+# kubectl apply -f helm/certmanager/test-shim.yaml
+
+
+# Add rancher repo
+helm repo add rancher-stable https://releases.rancher.com/server-charts/stable
+#helm install --name rancher --namespace cattle-system --set hostname=rancher3.k8s.angrynet.ninja --set ingress.tls.source=letsEncrypt --set letsEncrypt.email=jonbaker85@gmail.com rancher-stable/rancher
+helm install --name rancher --namespace rancher -f helm/rancher2/values.yaml rancher-stable/rancher
+
+# Add NFS storage class
+helm install --name nfs-storage --namespace nfs-storage -f helm/nfs/values.yaml stable/nfs-client-provisioner
+
+
+# Deploy gitlab
+# Seems to have problems with gitaly if so manually pull docker image to applicable node (reboot may be required)
+helm install --name gitlab --namespace=gitlab  -f helm/gitlab/values.yaml gitlab/gitlab
+kubectl create secret -n gitlab generic smtp-password --from-literal=password=Room2move2
+# get initial root password
+kubectl get secret gitlab-gitlab-initial-root-password -ojsonpath='{.data.password}' -n gitlab | base64 --decode ; echo
+# get minio keys
+kubectl get secret gitlab-minio-secret -ojsonpath='{.data.accesskey}' -n gitlab | base64 --decode ; echo
+kubectl get secret gitlab-minio-secret -ojsonpath='{.data.secretkey}' -n gitlab | base64 --decode ; echo

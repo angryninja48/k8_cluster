@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "pihole.fullname" . }}-udp
+  labels:
+    app.kubernetes.io/name: {{ template "pihole.fullname" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+spec:
+{{- if  .Values.service.dns.enabled }}
+{{- if (or (eq .Values.service.dns.type "ClusterIP") (empty .Values.service.dns.type)) }}
+  type: ClusterIP
+  {{- if .Values.service.dns.clusterIP }}
+  clusterIP: {{ .Values.service.dns.clusterIP }}
+  {{end}}
+{{- else if eq .Values.service.dns.type "LoadBalancer" }}
+  type: {{ .Values.service.dns.type }}
+  {{- if .Values.service.dns.loadBalancerIP }}
+  loadBalancerIP: {{ .Values.service.dns.loadBalancerIP }}
+  {{- end }}
+{{- else }}
+  type: {{ .Values.service.dns.type }}
+{{- end }}
+  ports:
+  - name: dns-udp
+    port: {{ .Values.service.dns.port | int }}
+    targetPort: 53
+    protocol: UDP
+{{- end }}
+  selector:
+    app.kubernetes.io/name: {{ template "pihole.fullname" . }}
