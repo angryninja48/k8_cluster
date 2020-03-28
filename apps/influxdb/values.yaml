@@ -1,0 +1,39 @@
+image:
+  repository: influxdb
+  tag: 1.7.10-alpine
+  pullPolicy: IfNotPresent
+
+replicaCount: 1
+
+ingress:
+  enabled: true
+  tls: true
+  annotations:
+    kubernetes.io/ingress.class: nginx-internal
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+  hostname: influxdb.angrynet.ninja
+  
+service:
+  type: ClusterIP
+
+resources:
+  requests:
+    memory: 256Mi
+    cpu: 0.1
+  limits:
+    memory: 8Gi
+    cpu: 4
+
+persistence:
+  enabled: true
+  size: 50Gi
+  storageClass: longhorn
+
+  accessMode: ReadWriteOnce
+
+nodeSelector:
+  size: large
+
+affinity: {}
+
+tolerations: {}
