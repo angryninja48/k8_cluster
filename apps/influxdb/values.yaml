@@ -5,6 +5,18 @@ image:
 
 replicaCount: 1
 
+setDefaultUser:
+  enabled: false
+  user:
+    username: admin
+    privileges: "WITH ALL PRIVILEGES"
+
+config:
+  admin:
+    enabled: true
+  http:
+    auth_enabled: true
+
 ingress:
   enabled: true
   tls: true
@@ -15,6 +27,7 @@ ingress:
   
 service:
   type: ClusterIP
+
 
 resources:
   requests:
@@ -37,3 +50,7 @@ nodeSelector:
 affinity: {}
 
 tolerations: {}
+
+env:
+  - name: INFLUXDB_DB
+    value: "speedtest"

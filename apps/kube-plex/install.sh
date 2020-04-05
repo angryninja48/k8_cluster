@@ -20,8 +20,5 @@ kubectl -f _namespace.yml create
 echo -n "Installing helm chart... "
 helm install --name gitlab --namespace gitlab -f ./values.yaml \
 --set postgres.password=$GITLAB_POSTGRES_PW \
---set redis.password=$GITLAB_REDIS_PW \
---set gitlab.smtp.password=$SMTP_PW \
---set gitlab.smtp.user=$SMTP_USER \
---set gitlab.smtp.address=$SMTP_ADDRESS \
+--set redis.password=$GITLAB_POSTGRES_PW \
 chartmuseum/gitlab-ce

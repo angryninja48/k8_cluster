@@ -24,6 +24,15 @@ gitlab:
 ## able to set it when you first visit your install.
 ##
 # gitlabRootPassword: password
+  # SMTP Configuration
+  #
+  smtp:
+    enabled: false
+    address: mail.example.com
+    port: 25
+    user: admin@example.com
+    password: supersecretpassword
+    domain: local.cloud
 
 ## Ingress configuration options
 ##

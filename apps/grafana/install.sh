@@ -14,11 +14,10 @@ if ! command -v helm > /dev/null; then
   exit 1
 fi
 
-echo -n "Creating namespace... "
-kubectl -f _namespace.yml create
+# echo -n "Creating namespace... "
+# kubectl -f _namespace.yml create
 
 echo -n "Installing helm chart... "
-helm upgrade --install influxdb --namespace monitoring \
+helm upgrade --install grafana --namespace monitoring \
 -f ./values.yaml \
---set setDefaultUser.user.password=$INFLUXDB_PW \
-influxdata/influxdb
+stable/grafana

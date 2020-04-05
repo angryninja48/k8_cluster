@@ -3,7 +3,7 @@
 ##
 image:
   repository: gitlab/gitlab-ce
-  tag: 12.5.7-ce.0
+  tag: 12.5.10-ce.0
   pullPolicy: IfNotPresent
 
 replicaCount: 1
@@ -18,6 +18,15 @@ gitlab:
 ## able to set it when you first visit your install.
 ##
 #  RootPassword:
+  # SMTP Configuration
+  #
+  smtp:
+    enabled: true
+    address: mail.example.com
+    port: 25
+#    user: "admin@example.com"
+#    password: supersecretpassword
+    domain: angryninja.cloud
 
 ## Ingress configuration options
 ##
@@ -46,6 +55,8 @@ service:
     enabled: true
     port: 22
     #nodePort: 30222
+
+
 
 ## Configure resource requests and limits
 ## ref: http://kubernetes.io/docs/user-guide/compute-resources/

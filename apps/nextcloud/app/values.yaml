@@ -52,11 +52,11 @@ persistence:
   ##   GKE, AWS & OpenStack)
   ##
 #  storageClass: "rook-ceph-block"
-  storageClass: "longhorn"
+#  storageClass: "longhorn"
   ## A manually managed Persistent Volume and Claim
   ## Requires persistence.enabled: true
   ## If defined, PVC must be created manually before volume will be bound
-#  existingClaim: test
+  existingClaim: "pvc-8f057a20-5ccc-473e-8605-87066d85b6c4"
 
   accessMode: ReadWriteOnce
   size: 150Gi
@@ -135,7 +135,8 @@ mariadb:
   ##
   persistence:
     enabled: true
-    storageClass: "longhorn"
+#    storageClass: "longhorn"
+    existingClaim: data-nextcloud-mariadb-0
     accessMode: ReadWriteOnce
     size: 8Gi
     config: |-

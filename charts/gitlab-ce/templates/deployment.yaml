@@ -72,6 +72,25 @@ spec:
             secretKeyRef:
               name: {{ template "gitlab-ce.fullname" . }}
               key: redis-password
+
+        ## SMTP configuration
+        ##
+        
+        - name: SMTP_ADDRESS
+          value: {{ .Values.gitlab.smtp.address | quote }}
+
+        - name: SMTP_USER
+          value: {{ .Values.gitlab.smtp.user | quote }}
+                    
+        - name: SMTP_DOMAIN
+          value: {{ .Values.gitlab.smtp.domain | quote }}
+
+        - name: SMTP_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ template "gitlab-ce.fullname" . }}
+              key: smtp-password
+
         ports:
         - name: ssh
           containerPort: 22

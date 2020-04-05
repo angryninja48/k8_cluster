@@ -107,7 +107,7 @@ services:
 # Longhorn
      - "/opt/rke/var/lib/kubelet/plugins:/var/lib/kubelet/plugins"
     extra_env: []
-    cluster_domain: angrynet.ninja
+    cluster_domain: angryninja.cloud
     infra_container_image: ""
     cluster_dns_server: 10.43.0.10
     fail_swap_on: false
@@ -132,7 +132,7 @@ authorization:
   mode: rbac
   options: {}
 ignore_docker_version: false
-kubernetes_version: "v1.16.8-rancher1-1"
+kubernetes_version: "v1.16.8-rancher1-3"
 private_registries: []
 ingress:
   provider: none

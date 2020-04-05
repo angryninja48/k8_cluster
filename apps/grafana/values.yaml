@@ -1,0 +1,42 @@
+image:
+  repository: grafana/grafana
+  tag: 6.7.1
+  pullPolicy: IfNotPresent
+
+replicaCount: 1
+
+ingress:
+  enabled: true
+  annotations:
+    kubernetes.io/ingress.class: nginx-internal
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+  hosts:
+    - grafana.angrynet.ninja
+  tls:
+    - secretName: grafana-tls
+      hosts:
+        - grafana.angrynet.ninja
+
+service:
+  type: ClusterIP
+
+resources:
+  requests:
+    memory: 256Mi
+    cpu: 0.1
+  limits:
+    memory: 8Gi
+    cpu: 4
+
+persistence:
+  enabled: true
+  size: 10Gi
+  storageClassName: longhorn
+  accessMode: ReadWriteOnce
+
+nodeSelector:
+  size: large
+
+affinity: {}
+
+tolerations: {}

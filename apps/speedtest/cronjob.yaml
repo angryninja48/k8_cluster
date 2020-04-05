@@ -1,0 +1,23 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: speedtest
+spec:
+  schedule: "*/5 * * * *"
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      ttlSecondsAfterFinished: 100
+      template:
+        spec:
+          containers:
+          - name: speedtest
+            image: angryninja/speedtest:latest
+            env:
+            - name: INFLUXDB_ADDRESS
+              value: influxdb.monitoring
+            - name: INFLUXDB_DB
+              value: db01
+            - name: SERVER
+              value: '2173,18713,2225,5026'
+          restartPolicy: Never
