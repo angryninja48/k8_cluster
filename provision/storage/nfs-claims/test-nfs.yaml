@@ -1,0 +1,17 @@
+kind: Pod
+apiVersion: v1
+metadata:
+  name: nfs-pod
+spec:
+  containers:
+    - name: nfs-demo
+      image: alpine
+      volumeMounts:
+      - name: nfs-demo
+        mountPath: /data/nfs
+      command: ["/bin/sh"]
+      args: ["-c", "sleep 500000"]
+  volumes:
+  - name: nfs-demo
+    persistentVolumeClaim:
+      claimName: media
