@@ -1,0 +1,113 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: blog
+  namespace: blog
+  labels:
+    app: blog
+spec:
+  selector:
+    matchLabels:
+      app: blog
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: blog
+    spec:
+      imagePullSecrets:
+        - name: dockerhub 
+      containers:
+      - name: blog
+        image: docker.io/angryninja/hugo-blog:1.4
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 80
+          name: http
+          protocol: TCP
+        livenessProbe:
+          failureThreshold: 16
+          httpGet:
+            path: /
+            port: 80
+            scheme: HTTP
+          initialDelaySeconds: 120
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /
+            port: 80
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        resources:
+          limits:
+            cpu: "1"
+            memory: 2Gi
+          requests:
+            cpu: 500m
+            memory: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: blog
+  namespace: blog
+  labels:
+    name: blog
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 80
+  selector:
+    app: blog
+
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  namespace: blog
+  labels:
+    name: blog
+  annotations:
+    kubernetes.io/ingress.class: nginx-external
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/from-to-www-redirect: "true"
+  name: blog
+spec:
+  rules:
+    - host: www.angryninja.blog
+      http:
+        paths:
+          - backend:
+              serviceName: blog
+              servicePort: 80
+            path: /
+  tls:
+  - hosts:
+    - www.angryninja.blog
+    secretName: angryninja-blog-tls
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  namespace: blog
+  labels:
+    name: redirect-blog
+  annotations:
+    kubernetes.io/ingress.class: nginx-external
+#    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/permanent-redirect: https://www.angryninja.blog 
+    nginx.ingress.kubernetes.io/from-to-www-redirect: "true"
+  name: redirect-blog
+spec:
+  rules:
+    - host: www.angrynet.ninja
+    - host: angrynet.ninja
