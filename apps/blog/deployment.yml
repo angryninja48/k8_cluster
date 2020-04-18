@@ -20,7 +20,7 @@ spec:
         - name: dockerhub 
       containers:
       - name: blog
-        image: docker.io/angryninja/hugo-blog:1.4
+        image: docker.io/angryninja/hugo-blog:1.5
         imagePullPolicy: Always
         ports:
         - containerPort: 80
@@ -78,7 +78,7 @@ metadata:
     name: blog
   annotations:
     kubernetes.io/ingress.class: nginx-external
-    cert-manager.io/cluster-issuer: letsencrypt-staging
+    cert-manager.io/cluster-issuer: letsencrypt-prod
 #    nginx.ingress.kubernetes.io/ssl-redirect: "true"
 #    nginx.ingress.kubernetes.io/from-to-www-redirect: "true"
   name: blog
