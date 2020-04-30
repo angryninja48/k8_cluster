@@ -1,0 +1,16 @@
+{{- $fullName := include "bitwarden.fullname" . -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "bitwarden.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ template "bitwarden.fullname" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+data: 
+  {{- range $key, $val := .Values.bitwarden }}
+  {{ $key | upper }}: {{ $val | quote }}
+  {{- end}}
+  DATA_FOLDER: /bw-data
