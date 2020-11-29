@@ -30,26 +30,72 @@ spec:
         - "-text=echo1"
         ports:
         - containerPort: 5678
+# ---
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata:
+#   annotations:
+#     # add an annotation indicating the issuer to use.
+#     #certmanager.k8s.io/cluster-issuer: letsencrypt-production
+#     cert-manager.io/cluster-issuer: letsencrypt-staging
+#     kubernetes.io/ingress.class: nginx-internal
+#   name: test-ingress
+# #  namespace: myIngress
+# spec:
+#   rules:
+#   - host: test.angryninja.cloud
+#     http:
+#       paths:
+#       - backend:
+#           serviceName: echo1
+#           servicePort: 80
+#         path: /
+#   tls:
+#   - hosts:
+#     - test.angryninja.cloud
+#     secretName: test-ingress
 ---
-apiVersion: extensions/v1beta1
+# apiVersion: networking.k8s.io/v1beta1
+# kind: IngressClass
+# metadata:
+#   name: internal-ingress
+#   annotations:
+#     ingressclass.kubernetes.io/is-default-class: "true"
+# spec:
+#   controller: getambassador.io/ingress-controller
+
+apiVersion: networking.k8s.io/v1beta1
+kind: IngressClass
+metadata:
+  name: internal-lb
+spec:
+  controller: angryninja.cloud/ingress-controller
+  parameters:
+    apiGroup: k8s.angryninja.cloud/v1alpha
+    kind: IngressParameters
+    name: internal-lb
+
+
+---
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  annotations:
-    # add an annotation indicating the issuer to use.
-    #certmanager.k8s.io/cluster-issuer: letsencrypt-production
-    certmanager.k8s.io/cluster-issuer: letsencrypt-staging
-  name: test-ingress120
-#  namespace: myIngress
+  name: tls-example-ingress
+  cert-manager.io/cluster-issuer: letsencrypt-staging
+  kubernetes.io/ingress.class: nginx-internal
 spec:
-  rules:
-  - host: test11.k8s.angrynet.ninja
-    http:
-      paths:
-      - backend:
-          serviceName: echo1
-          servicePort: 80
-        path: /
   tls:
   - hosts:
-    - test10.k8s.angrynet.ninja
-    secretName: test-ingress120
+      - test.angryninja.cloud
+    secretName: testsecret-tls
+  rules:
+  - host: test.angryninja.cloud
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: echo1
+            port:
+              number: 80

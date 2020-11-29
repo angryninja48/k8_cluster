@@ -13,6 +13,7 @@ spec:
           containers:
           - name: speedtest
             image: angryninja/speedtest:latest
+            imagePullPolicy: IfNotPresent
             env:
             - name: INFLUXDB_ADDRESS
               value: influxdb.monitoring

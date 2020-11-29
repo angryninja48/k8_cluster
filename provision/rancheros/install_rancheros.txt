@@ -12,6 +12,7 @@ cat <<EOF > /tmp/cloud-config.yml
 hostname: node01
 
 rancher:
+  console: ubuntu
   network:
     interfaces:
       eth*:

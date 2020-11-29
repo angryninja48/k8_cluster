@@ -1,7 +1,7 @@
 # If you intened to deploy Kubernetes in an air-gapped environment,
 # please consult the documentation on how to configure custom RKE images.
 nodes:
-- address: 10.20.0.10
+- address: master01.angryninja.cloud
   port: "22"
   internal_address: ""
   role:
@@ -16,8 +16,8 @@ nodes:
   ssh_cert: ""
   ssh_cert_path: ""
   labels:
-    size: small
-- address: 10.20.0.11
+    size: large
+- address: node01.angryninja.cloud
   port: "22"
   internal_address: ""
   role:
@@ -30,8 +30,8 @@ nodes:
   ssh_cert: ""
   ssh_cert_path: ""
   labels:
-    size: medium
-- address: 10.20.0.12
+    size: large
+- address: node02.angryninja.cloud
   port: "22"
   internal_address: ""
   role:
@@ -44,8 +44,8 @@ nodes:
   ssh_cert: ""
   ssh_cert_path: ""
   labels:
-    size: large
-- address: 10.20.0.13
+    size: small
+- address: node03.angryninja.cloud
   port: "22"
   internal_address: ""
   role:
@@ -58,7 +58,7 @@ nodes:
   ssh_cert: ""
   ssh_cert_path: ""
   labels:
-    size: large
+    size: small
 services:
   etcd:
     image: ""
@@ -132,7 +132,7 @@ authorization:
   mode: rbac
   options: {}
 ignore_docker_version: false
-kubernetes_version: "v1.16.8-rancher1-3"
+# kubernetes_version: "v1.16.8-rancher1-3"
 private_registries: []
 ingress:
   provider: none

@@ -1,12 +1,12 @@
 image:
   repository: nextcloud
-  tag: latest
+  tag: 18.04
   pullPolicy: IfNotPresent
 
 nextcloud:
   username: admin
   password: password
-  host: nextcloud.angrynet.ninja
+  host: nc.angryninja.cloud
   datadir: /var/www/html/data
   configs:
     proxy.config.php: |-
@@ -14,31 +14,8 @@ nextcloud:
       $CONFIG = array (
         'trusted_proxies' => ['10.0.0.0/8'],
         'overwriteprotocol' => 'https',
-        'overwritehost' => 'nextcloud.angrynet.ninja',
+        'overwritehost' => 'nc.angryninja.cloud',
       );
-
-#    myroot.config.php: |
-#        <?php
-#        $CONFIG = array (
-#        'trusted_proxies' => ['10.0.0.0/8'],
-#        'overwriteprotocol' => 'https',
-#        'overwritehost' => 'flow.local',
-#        'overwritewebroot' => '/nc',
-#        'allow_user_to_change_display_name' => false,
-#        'lost_password_link' => 'disabled',
-#        'oidc_login_client_id' => 'nc-oauth2',
-#        'oidc_login_client_secret' => '4tk5QSwXOin6Uf1zhhxwqKBoAX6jf54',
-#        'oidc_login_provider_url' => 'https://flow.local/dex',
-#        'oidc_login_button_text' => 'Log in with OpenID',
-#        'oidc_login_attributes' => array (
-#            'id' => 'sub',
-#            'name' => 'name',
-#            'mail' => 'mail',
-#            'home' => 'name',
-#        ),
-#        'oidc_login_disable_registration' => false,
-#        'oidc_login_redir_fallback' => false,
-#        );
 
 persistence:
   # Nextcloud Data (/var/www/html)
@@ -65,7 +42,7 @@ ingress:
   enabled: true
   annotations:
     kubernetes.io/ingress.class: "nginx-external"
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    cert-manager.io/cluster-issuer: "letsencrypt-staging"
     nginx.ingress.kubernetes.io/proxy-body-size: "256m"
     nginx.ingress.kubernetes.io/server-snippet: |-
       server_tokens off;
@@ -94,7 +71,7 @@ ingress:
   tls:
     - secretName: nextcloud-tls
       hosts:
-        - nextcloud.angrynet.ninja
+        - nc.angryninja.cloud
 
 internalDatabase:
   enabled: false
@@ -118,12 +95,12 @@ mariadb:
   enabled: true
 
   rootUser:
-    password: uigvdDSueh213
+    password: password
 
   db:
     name: nextcloud
     user: nextcloud
-    password: bds782cdjnAS
+    password: password
 
   ## Disable MariaDB replication
   replication:
@@ -185,3 +162,6 @@ resources:
   limits:
     memory: 1024Mi
     cpu: 500m
+
+nodeSelector:
+  size: large

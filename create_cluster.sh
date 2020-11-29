@@ -18,19 +18,24 @@ source kube.env
 # sleep 30
 
 # Install metallb
-#kubectl create ns metallb
+# kubectl create ns metallb
 #kubectl apply -f metallb-configmap.yaml
-helm install --name metallb --namespace metallb -f helm/metallb/values.yaml stable/metallb
+helm repo add bitnami https://charts.bitnami.com/bitnami
+helm install metallb --namespace metallb -f apps/metallb/values.yml bitnami/metallb --create-namespace
 
 # install ingress controller
 #kubectl create ns ingress-system
-helm install --name nginx-ingress --namespace ingress -f helm/ingress/values.yaml stable/nginx-ingress
+helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+helm repo add stable https://charts.helm.sh/stable
+helm repo update
+helm install nginx-internal-ingress --namespace ingress -f apps/nginx-ingress/internal/values.yaml ingress-nginx/ingress-nginx --create-namespace
+helm install nginx-external-ingress --namespace ingress -f apps/nginx-ingress/external/values.yaml ingress-nginx/ingress-nginx --create-namespace
 
 # Install cert-manager - Change DNS as it needs to resolve external names to verify. Port 80 needs to be open as well
 # Cert-manager creds
-kubectl apply --validate=false -f https://raw.githubusercontent.com/jetstack/cert-manager/release-0.12/deploy/manifests/00-crds.yaml
+kubectl apply --validate=false -f https://raw.githubusercontent.com/jetstack/cert-manager/release-0.11/deploy/manifests/00-crds.yaml
 helm repo add jetstack https://charts.jetstack.io
-helm install --name cert-manager --namespace cert-manager --version v0.12.0 -f helm/certmanager/values.yaml jetstack/cert-manager
+helm install cert-manager --namespace cert-manager --version v0.12.0 -f apps/certmanager/values.yaml jetstack/cert-manager --create-namespace
 
 #Wait for cert-manager
 sleep 30
@@ -42,7 +47,7 @@ kubectl apply -f apps/certmanager/issuer-dns.yaml
 # Can use HTTP to validate if need be however requires port 80 to be opened and accessable from the internet
 # kubectl apply -f apps/certmanager/issuer-http.yaml
 # Test if needed:
-# kubectl apply -f helm/certmanager/test-shim.yaml
+# kubectl apply -f apps/certmanager/test-shim.yaml
 
 ##########
 # Storage - Longhorn
@@ -58,7 +63,7 @@ kubectl apply -f apps/certmanager/issuer-dns.yaml
 #
 ###### mount drives i.e. /dev/sda -> /storage
 
-helm install provision/storage/longhorn --name longhorn --namespace longhorn-system
+helm install longhorn --namespace longhorn-system longhorn/longhorn --create-namespace -f provision/storage/longhorn/values.yaml
 # Need to configure via GUI - need to look into this
 
 

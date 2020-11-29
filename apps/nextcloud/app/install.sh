@@ -18,4 +18,21 @@ echo -n "Creating namespace... "
 kubectl -f _namespace.yml create
 
 echo -n "Installing helm chart... "
-helm install --name nextcloud --namespace nextcloud -f ./values.yaml stable/nextcloud
+helm upgrade --install nextcloud --namespace nextcloud \
+-f values.yaml \
+--set nextcloud.username=$ROOT_USER \
+--set nextcloud.password=$ROOT_PW \
+--set mariadb.rootUser.password=$ROOT_DB_PW \
+--set mariadb.db.user=$NEXTCLOUD_DB_USER \
+--set mariadb.db.password=$NEXTCLOUD_DB_PW \
+stable/nextcloud
+
+# helm upgrade --recreate-pods nextcloud --namespace nextcloud \
+# -f values.yaml \
+# --set nextcloud.username=$ROOT_USER \
+# --set nextcloud.password=$ROOT_PW \
+# --set mariadb.rootUser.password=$ROOT_DB_PW \
+# --set mariadb.db.user=$NEXTCLOUD_DB_USER \
+# --set mariadb.db.password=$NEXTCLOUD_DB_PW \
+# stable/nextcloud
+
