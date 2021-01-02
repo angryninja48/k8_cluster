@@ -66,7 +66,7 @@ spec:
           mountPath: /etc/pihole
 
       - name: cloudflared
-        image: visibilityspots/cloudflared:amd64
+        image: visibilityspots/cloudflared:latest
         imagePullPolicy: {{ default "" .Values.image.pullPolicy | quote }}
         env:
         - name: TUNNEL_METRICS

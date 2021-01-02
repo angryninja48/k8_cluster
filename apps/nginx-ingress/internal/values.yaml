@@ -2,7 +2,8 @@ controller:
   service:
     type: LoadBalancer
     loadBalancerIP: 10.20.0.51
-  ingressClass: nginx-internal
-
-tcp:
-  22: "gitlab/gitlab-gitlab-ce:22"
+  ingressClass: internal
+  setAsDefaultIngress: true
+  
+# tcp:
+#   22: "gitlab/gitlab-gitlab-ce:22"

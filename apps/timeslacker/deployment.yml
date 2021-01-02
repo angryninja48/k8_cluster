@@ -1,0 +1,165 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: timeslacker
+  namespace: timeslacker
+  labels:
+    app: timeslacker
+spec:
+  selector:
+    matchLabels:
+      app: timeslacker
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: timeslacker
+    spec:
+      # imagePullSecrets:
+      #   - name: dockerhub 
+      containers:
+      - name: timeslacker
+        image: angryninja/timeslacker
+        imagePullPolicy: Always
+        envFrom:
+        - secretRef:
+            name: timeslacker
+        ports:
+        - containerPort: 8000
+          name: http
+          protocol: TCP
+        livenessProbe:
+          failureThreshold: 16
+          httpGet:
+            path: /
+            port: 8000
+            scheme: HTTP
+          initialDelaySeconds: 120
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /
+            port: 8000
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        resources:
+          limits:
+            cpu: "1"
+            memory: 1Gi
+          requests:
+            cpu: 500m
+            memory: 500m
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: timeslacker
+  namespace: timeslacker
+  labels:
+    name: timeslacker
+spec:
+  ports:
+  - port: 8000
+    protocol: TCP
+    targetPort: 8000
+  selector:
+    app: timeslacker
+
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  namespace: timeslacker
+  labels:
+    name: timeslacker
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.org/server-snippets: |
+      location /kickoff {
+          allow 10.0.0.0/8;
+          deny all;
+          proxy_http_version 1.1;
+          proxy_connect_timeout 60s;
+          proxy_read_timeout 60s;
+          proxy_send_timeout 60s;
+          client_max_body_size 1m;
+          proxy_set_header Host $host;
+          proxy_set_header X-Real-IP $remote_addr;
+          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+          proxy_set_header X-Forwarded-Host $host;
+          proxy_set_header X-Forwarded-Port $server_port;
+          proxy_set_header X-Forwarded-Proto $scheme;
+          proxy_buffering on;
+          proxy_pass http://timeslacker-timeslacker-slack.angryninja.cloud-timeslacker-8000;
+      }
+  name: timeslacker
+spec:
+  ingressClassName: external
+  rules:
+    - host: slack.angryninja.cloud
+      http:
+        paths:
+          - backend:
+              serviceName: timeslacker
+              servicePort: 8000
+            path: /
+  tls:
+  - hosts:
+    - slack.angryninja.cloud
+    secretName: angryninja-timeslacker
+
+---
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  namespace: timeslacker
+  name: kickoff
+spec:
+  #RancherOS doesn't support TZDATA > Must run it in UTC
+  schedule: "00 05 * * Fri" # 16:00 Friday AESDT
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: curl
+            image: curlimages/curl
+            command: ["/bin/sh", "-c"]
+            args: ["curl http://timeslacker:8000/kickoff"]
+          restartPolicy: Never
+# ---
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   namespace: timeslacker
+#   name: curl
+# spec:
+#   selector:
+#     matchLabels:
+#       app: curl
+#   replicas: 1
+#   template:
+#     metadata:
+#       labels:
+#         app: curl
+#     spec:
+#       containers:
+#       - name: curl
+#         image: curlimages/curl
+#         command:
+#         - sleep
+#         - "3600"
+#         resources:
+#           requests:
+#             cpu: 0.1
+#             memory: 200

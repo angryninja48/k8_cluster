@@ -5,6 +5,12 @@ set -o pipefail
 # Import ENV Vars
 source kube.env
 
+helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+helm repo add jetstack https://charts.jetstack.io
+helm repo add bitnami https://charts.bitnami.com/bitnami
+
+helm repo update
+
 # Provision kubernetes
 #rke up
 
@@ -20,22 +26,48 @@ source kube.env
 # Install metallb
 # kubectl create ns metallb
 #kubectl apply -f metallb-configmap.yaml
-helm repo add bitnami https://charts.bitnami.com/bitnami
-helm install metallb --namespace metallb -f apps/metallb/values.yml bitnami/metallb --create-namespace
+helm install \
+    metallb bitnami/metallb \
+    -f apps/metallb/values.yml \
+    --create-namespace \
+    --namespace ingress 
 
 # install ingress controller
 #kubectl create ns ingress-system
-helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
-helm repo add stable https://charts.helm.sh/stable
-helm repo update
-helm install nginx-internal-ingress --namespace ingress -f apps/nginx-ingress/internal/values.yaml ingress-nginx/ingress-nginx --create-namespace
-helm install nginx-external-ingress --namespace ingress -f apps/nginx-ingress/external/values.yaml ingress-nginx/ingress-nginx --create-namespace
+# helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+# helm repo add stable https://charts.helm.sh/stable
+# helm repo update
+# helm install nginx-internal-ingress --namespace ingress -f apps/nginx-ingress/internal/values.yaml ingress-nginx/ingress-nginx --create-namespace
+# helm install nginx-external-ingress --namespace ingress -f apps/nginx-ingress/external/values.yaml ingress-nginx/ingress-nginx --create-namespace
 
 # Install cert-manager - Change DNS as it needs to resolve external names to verify. Port 80 needs to be open as well
 # Cert-manager creds
-kubectl apply --validate=false -f https://raw.githubusercontent.com/jetstack/cert-manager/release-0.11/deploy/manifests/00-crds.yaml
-helm repo add jetstack https://charts.jetstack.io
-helm install cert-manager --namespace cert-manager --version v0.12.0 -f apps/certmanager/values.yaml jetstack/cert-manager --create-namespace
+# kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v1.1.0/cert-manager.crds.yaml
+# helm install cert-manager --namespace cert-manager --version v1.1.0 -f apps/certmanager/values.yaml jetstack/cert-manager 
+
+helm install \
+    internal-ingress nginx-stable/nginx-ingress \
+    -f apps/nginx-ingress/internal/values.yaml \
+    --create-namespace \
+    --namespace ingress 
+
+helm install \
+    external-ingress nginx-stable/nginx-ingress \
+    -f apps/nginx-ingress/external/values.yaml \
+    --create-namespace \
+    --namespace ingress 
+
+
+helm install \
+  cert-manager jetstack/cert-manager \
+#   -f apps/certmanager/values.yaml \
+  --namespace cert-manager \
+  --version v1.1.0 \
+  --create-namespace \
+  --set ingressShim.defaultIssuerName=letsencrypt-staging \
+  --set ingressShim.defaultIssuerKind=ClusterIssuer \
+  --set 'extraArgs={--dns01-recursive-nameservers=8.8.8.8:53\,1.1.1.1:53}' \
+  --set installCRDs=true
 
 #Wait for cert-manager
 sleep 30
@@ -63,7 +95,19 @@ kubectl apply -f apps/certmanager/issuer-dns.yaml
 #
 ###### mount drives i.e. /dev/sda -> /storage
 
-helm install longhorn --namespace longhorn-system longhorn/longhorn --create-namespace -f provision/storage/longhorn/values.yaml
+helm install \
+    longhorn longhorn/longhorn \
+    -f apps/certmanager/values.yaml \
+    --namespace longhorn-system \
+    --create-namespace
+
+helm install \
+    pihole charts/pihole \
+    -f apps/pihole/values.yaml \
+    --namespace pihole \
+    --create-namespace
+
+
 # Need to configure via GUI - need to look into this
 
 
@@ -72,5 +116,20 @@ helm install longhorn --namespace longhorn-system longhorn/longhorn --create-nam
 # #helm install --name rancher --namespace cattle-system --set hostname=rancher3.k8s.angrynet.ninja --set ingress.tls.source=letsEncrypt --set letsEncrypt.email=jonbaker85@gmail.com rancher-stable/rancher
 # helm install --name rancher --namespace rancher -f helm/rancher2/values.yaml rancher-stable/rancher
 
-# Add NFS storage class
-helm install --name nfs-storage --namespace nfs-storage -f helm/nfs/values.yaml stable/nfs-client-provisioner
+# # Add NFS storage class
+# helm install \
+#     --name nfs-storage stable/nfs-client-provisioner \
+#     -f helm/nfs/values.yaml \
+#     --namespace nfs-storage \
+#     --create-namespace
+
+# K8's at home repo
+helm repo add k8s-at-home https://k8s-at-home.com/charts/
+
+
+
+helm template \
+    home-assistant k8s-at-home/home-assistant \
+    -f apps/home-assistant/values.yaml \
+    --namespace hass \
+    --create-namespace

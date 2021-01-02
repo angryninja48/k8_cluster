@@ -25,3 +25,5 @@ provision/docker
 manual/*
 kube_config_cluster.yml
 Makefile
+
+secret*

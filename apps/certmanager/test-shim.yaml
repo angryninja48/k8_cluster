@@ -30,6 +30,34 @@ spec:
         - "-text=echo1"
         ports:
         - containerPort: 5678
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: test-ingress
+  namespace: default
+  annotations:
+    # kubernetes.io/ingress.class: "internal"
+    cert-manager.io/cluster-issuer: "letsencrypt-staging"
+spec:
+  ingressClassName: external
+  tls:
+    - hosts:
+        - test.angryninja.cloud
+      secretName: test4-tls
+  rules:
+    - host: test.angryninja.cloud
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: echo1
+                port:
+                  number: 80
+
 # ---
 # apiVersion: networking.k8s.io/v1
 # kind: Ingress
@@ -54,7 +82,7 @@ spec:
 #   - hosts:
 #     - test.angryninja.cloud
 #     secretName: test-ingress
----
+# ---
 # apiVersion: networking.k8s.io/v1beta1
 # kind: IngressClass
 # metadata:
@@ -64,38 +92,38 @@ spec:
 # spec:
 #   controller: getambassador.io/ingress-controller
 
-apiVersion: networking.k8s.io/v1beta1
-kind: IngressClass
-metadata:
-  name: internal-lb
-spec:
-  controller: angryninja.cloud/ingress-controller
-  parameters:
-    apiGroup: k8s.angryninja.cloud/v1alpha
-    kind: IngressParameters
-    name: internal-lb
+# apiVersion: networking.k8s.io/v1beta1
+# kind: IngressClass
+# metadata:
+#   name: internal-lb
+# spec:
+#   controller: angryninja.cloud/ingress-controller
+#   parameters:
+#     apiGroup: k8s.angryninja.cloud/v1alpha
+#     kind: IngressParameters
+#     name: internal-lb
 
 
----
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: tls-example-ingress
-  cert-manager.io/cluster-issuer: letsencrypt-staging
-  kubernetes.io/ingress.class: nginx-internal
-spec:
-  tls:
-  - hosts:
-      - test.angryninja.cloud
-    secretName: testsecret-tls
-  rules:
-  - host: test.angryninja.cloud
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: echo1
-            port:
-              number: 80
+# ---
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata:
+#   name: tls-example-ingress
+#   cert-manager.io/cluster-issuer: letsencrypt-staging
+#   kubernetes.io/ingress.class: nginx-internal
+# spec:
+#   tls:
+#   - hosts:
+#       - test.angryninja.cloud
+#     secretName: testsecret-tls
+#   rules:
+#   - host: test.angryninja.cloud
+#     http:
+#       paths:
+#       - path: /
+#         pathType: Prefix
+#         backend:
+#           service:
+#             name: echo1
+#             port:
+#               number: 80
